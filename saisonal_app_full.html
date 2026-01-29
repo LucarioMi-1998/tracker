@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Saisonal DE – Kacheln & Nährwerte</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#111936;
+      --panel2: rgba(255,255,255,.06);
+      --text:#eef2ff;
+      --muted:#b8c0ff;
+      --border:rgba(255,255,255,.10);
+      --shadow: 0 10px 28px rgba(0,0,0,.35);
+      --radius:18px;
+
+      --good:#22c55e;
+      --imp:#ef4444;
+      --impBg: rgba(239,68,68,.12);
+      --impBorder: rgba(239,68,68,.30);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background:
+        radial-gradient(1100px 700px at 20% 0%, rgba(124,58,237,.18), transparent 60%),
+        radial-gradient(900px 650px at 100% 40%, rgba(34,197,94,.10), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      padding:14px;
+    }
+
+    header{
+      position:sticky; top:0; z-index:10;
+      background: linear-gradient(180deg, rgba(11,16,32,.94), rgba(11,16,32,.70));
+      backdrop-filter: blur(10px);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:12px;
+      margin-bottom:12px;
+    }
+    h1{margin:0; font-size:18px; letter-spacing:.2px}
+    .sub{margin-top:6px; color:var(--muted); font-size:12.5px; line-height:1.35}
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:8px;
+      margin-top:10px;
+      align-items:center;
+    }
+    select, button{
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      font-size:14px;
+      outline:none;
+    }
+    button{cursor:pointer}
+    button:active{transform:translateY(1px)}
+    .chipRow{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+    .chip{
+      font-size:12px; padding:6px 10px; border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      white-space:nowrap;
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    @media (min-width: 980px){
+      body{padding:18px}
+      h1{font-size:22px}
+      .layout{grid-template-columns: 1fr 1fr 1fr}
+      .controls{grid-template-columns: 1fr auto auto}
+    }
+
+    .card{
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card.import{
+      border-color: var(--impBorder);
+      background: linear-gradient(180deg, rgba(239,68,68,.14), rgba(255,255,255,.02));
+    }
+    .cardHead{
+      padding:12px;
+      border-bottom:1px solid var(--border);
+      display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;
+    }
+    .card.import .cardHead{ border-bottom-color: var(--impBorder); }
+    .title{
+      display:flex; align-items:center; gap:8px;
+      font-weight:900; font-size:14px;
+    }
+    .hint{color:var(--muted); font-size:12px}
+
+    .content{padding:12px}
+
+    /* Square tile grid */
+    .tileGrid{
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap:10px;
+    }
+    @media (max-width: 420px){
+      .tileGrid{ grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap:9px; }
+    }
+
+    .tile{
+      position:relative;
+      aspect-ratio: 1 / 1;
+      border-radius: 16px;
+      border:1px solid var(--border);
+      background:
+        radial-gradient(120px 90px at 20% 10%, rgba(255,255,255,.08), transparent 55%),
+        rgba(255,255,255,.04);
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      cursor:pointer;
+      user-select:none;
+      overflow:hidden;
+    }
+    .tile:active{ transform: translateY(1px); }
+    .tile.good{
+      border-color: rgba(34,197,94,.32);
+      background:
+        radial-gradient(140px 110px at 20% 10%, rgba(34,197,94,.18), transparent 58%),
+        rgba(34,197,94,.06);
+    }
+    .tile.import{
+      border-color: var(--impBorder);
+      background:
+        radial-gradient(140px 110px at 20% 10%, rgba(239,68,68,.20), transparent 58%),
+        var(--impBg);
+    }
+
+    .tileTop{
+      display:flex; justify-content:space-between; align-items:flex-start; gap:8px;
+      font-size:12px; color:var(--muted);
+    }
+    .badge{
+      font-size:11px;
+      padding:3px 7px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .tileName{
+      font-weight:900;
+      font-size:13px;
+      line-height:1.15;
+      word-break: break-word;
+      color: var(--text);
+    }
+    .tileEmoji{
+      font-size:18px;
+      opacity:.95;
+      filter: drop-shadow(0 8px 16px rgba(0,0,0,.35));
+    }
+
+    .empty{
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height:1.45;
+      padding:8px 2px 0;
+    }
+
+    /* Bottom sheet */
+    #nutritionModal{ position:fixed; inset:0; z-index:1000; display:none; }
+    #nutritionBackdrop{ position:absolute; inset:0; background: rgba(0,0,0,.55); }
+    #nutritionSheet{
+      position:absolute; left:0; right:0; bottom:0;
+      background:#0f1630;
+      border-radius: 18px 18px 0 0;
+      border-top:1px solid rgba(255,255,255,.10);
+      padding:14px;
+      max-height: 72vh;
+      overflow:auto;
+      box-shadow: 0 -14px 34px rgba(0,0,0,.55);
+    }
+    .sheetHeader{
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      margin-bottom:10px;
+    }
+    #nutriTitle{ font-weight:900; font-size:16px; line-height:1.2 }
+    #nutriClose{
+      background:none;
+      border:1px solid rgba(255,255,255,.15);
+      color: var(--text);
+      border-radius:10px;
+      padding:6px 10px;
+      font-size:16px;
+      cursor:pointer;
+    }
+    .nutriGrid{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:10px;
+      margin-top:8px;
+    }
+    .nutriItem{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:12px;
+      padding:8px;
+      font-size:13px;
+      line-height:1.25;
+    }
+    .nutriNote{
+      margin-top:10px;
+      font-size:12.5px;
+      color: var(--muted);
+      line-height:1.4;
+    }
+    .nutriSource{
+      margin-top:10px;
+      font-size:11.5px;
+      color: var(--muted);
+      opacity:.9;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Saisonal in Deutschland</h1>
+  <div class="sub">Quadratische Kacheln, mobil-first. Tippe ein Produkt → Nährwerte (pro 100 g).</div>
+
+  <div class="controls">
+    <select id="monthSelect" aria-label="Monat auswählen"></select>
+    <button id="todayBtn" aria-label="Aktueller Monat">Heute</button>
+    <button id="toggleImportsBtn" aria-label="Importliste umschalten">Import: Alle</button>
+    <input id="search" placeholder="Suche (Import): z.B. Spanien, Knoblauch, Mango…" aria-label="Suche Import" />
+  </div>
+
+  <div class="chipRow">
+    <span class="chip" id="monthTitle">📅 —</span>
+    <span class="chip">ℹ️ Kacheln sind tappbar</span>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="card" aria-label="Obst">
+    <div class="cardHead">
+      <div class="title">🍎 Obst</div>
+      <div class="hint">Frisch/Lager zusammen</div>
+    </div>
+    <div class="content">
+      <div class="tileGrid" id="fruitGrid"></div>
+      <div class="empty" id="fruitEmpty" style="display:none;">Für diesen Monat sind hier noch keine Obst-Kacheln hinterlegt.</div>
+    </div>
+  </section>
+
+  <section class="card" aria-label="Gemüse">
+    <div class="cardHead">
+      <div class="title">🥦 Gemüse</div>
+      <div class="hint">Frisch/Lager zusammen</div>
+    </div>
+    <div class="content">
+      <div class="tileGrid" id="vegGrid"></div>
+      <div class="empty" id="vegEmpty" style="display:none;">Für diesen Monat sind hier noch keine Gemüse-Kacheln hinterlegt.</div>
+    </div>
+  </section>
+
+  <section class="card import" aria-label="Import">
+    <div class="cardHead">
+      <div class="title">🚨 Import</div>
+      <div class="hint">Herkunft checken</div>
+    </div>
+    <div class="content">
+      <div class="tileGrid" id="impGrid"></div>
+      <div class="empty" id="impEmpty" style="display:none;">Keine Import-Kacheln hinterlegt.</div>
+    </div>
+  </section>
+</main>
+
+<!-- Bottom sheet -->
+<div id="nutritionModal" aria-hidden="true">
+  <div id="nutritionBackdrop"></div>
+  <div id="nutritionSheet" role="dialog" aria-label="Nährwerte">
+    <div class="sheetHeader">
+      <div id="nutriTitle">Produkt</div>
+      <button id="nutriClose" aria-label="Schließen">✕</button>
+    </div>
+    <div id="nutriContent"></div>
+    <div class="nutriSource">Angaben pro 100 g · gerundete Durchschnittswerte (für Vergleich, nicht Laborwerte).</div>
+  </div>
+</div>
+
+
+
+
+<script>
+const months = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+const seasonal = {"Januar": {"fruitFresh": [], "fruitStore": ["Äpfel", "Birnen"], "vegFresh": ["Grünkohl", "Rosenkohl", "Feldsalat", "Lauch"], "vegStore": ["Kartoffeln", "Möhren", "Rote Bete", "Weißkohl", "Rotkohl", "Wirsing", "Zwiebeln", "Knollensellerie", "Pastinaken", "Steckrüben"]}, "Februar": {"fruitFresh": [], "fruitStore": ["Äpfel", "Birnen"], "vegFresh": ["Grünkohl", "Rosenkohl", "Feldsalat", "Lauch"], "vegStore": ["Kartoffeln", "Möhren", "Rote Bete", "Kohlarten", "Zwiebeln", "Knollensellerie", "Pastinaken", "Steckrüben"]}, "März": {"fruitFresh": [], "fruitStore": ["Äpfel"], "vegFresh": ["Lauch", "Feldsalat"], "vegStore": ["Kartoffeln", "Möhren", "Rote Bete", "Kohlarten", "Zwiebeln", "Knollensellerie", "Pastinaken"]}, "April": {"fruitFresh": [], "fruitStore": ["Äpfel (späte Lagerbestände)"], "vegFresh": ["Spinat", "Radieschen", "Frühlingszwiebeln"], "vegStore": ["Kartoffeln", "Möhren", "Rote Bete", "Kohlarten", "Zwiebeln"]}, "Mai": {"fruitFresh": ["Erdbeeren (ab Monatsende)", "Rhabarber"], "fruitStore": ["Äpfel (Restbestände)"], "vegFresh": ["Spargel", "Spinat", "Radieschen", "Salate", "Kohlrabi", "Frühlingszwiebeln"], "vegStore": ["Kartoffeln (späte Lager)"]}, "Juni": {"fruitFresh": ["Erdbeeren", "Kirschen", "Johannisbeeren", "Stachelbeeren", "Himbeeren"], "fruitStore": [], "vegFresh": ["Spargel (bis Ende)", "Brokkoli", "Blumenkohl", "Kohlrabi", "Erbsen", "Mangold", "Salate", "Zucchini", "Gurken"], "vegStore": []}, "Juli": {"fruitFresh": ["Kirschen", "Johannisbeeren", "Stachelbeeren", "Himbeeren", "Heidelbeeren", "Aprikosen", "Pfirsiche", "Pflaumen/Zwetschgen", "Erdbeeren (spät)"], "fruitStore": [], "vegFresh": ["Tomaten", "Gurken", "Zucchini", "Paprika", "Aubergine", "Chili/Peperoni", "Bohnen", "Brokkoli", "Blumenkohl", "Salate", "Frühkartoffeln"], "vegStore": []}, "August": {"fruitFresh": ["Äpfel (frühe Sorten)", "Birnen", "Pflaumen/Zwetschgen", "Mirabellen", "Aprikosen", "Pfirsiche", "Brombeeren", "Himbeeren"], "fruitStore": [], "vegFresh": ["Tomaten", "Gurken", "Zucchini", "Paprika", "Aubergine", "Chili/Peperoni", "Bohnen", "Mais", "Mangold", "Lauch (früh)"], "vegStore": []}, "September": {"fruitFresh": ["Äpfel", "Birnen", "Pflaumen/Zwetschgen", "Trauben", "Brombeeren", "Quitten"], "fruitStore": [], "vegFresh": ["Kürbis", "Lauch", "Möhren", "Rote Bete", "Sellerie", "Kohlrabi", "Bohnen", "Spinat"], "vegStore": ["Kartoffeln (neue Lager)"]}, "Oktober": {"fruitFresh": ["Äpfel", "Birnen", "Quitten", "Trauben (spät)"], "fruitStore": [], "vegFresh": ["Kürbis", "Lauch", "Grünkohl (Start)", "Rosenkohl (Start)", "Spinat"], "vegStore": ["Kartoffeln", "Möhren", "Kohlarten", "Zwiebeln"]}, "November": {"fruitFresh": [], "fruitStore": ["Äpfel", "Birnen (Lager)"], "vegFresh": ["Grünkohl", "Rosenkohl", "Feldsalat", "Lauch"], "vegStore": ["Kartoffeln", "Möhren", "Rote Bete", "Kohlarten", "Zwiebeln", "Knollensellerie", "Pastinaken"]}, "Dezember": {"fruitFresh": [], "fruitStore": ["Äpfel", "Birnen (Lager)"], "vegFresh": ["Grünkohl", "Rosenkohl", "Feldsalat", "Lauch"], "vegStore": ["Kartoffeln", "Möhren", "Rote Bete", "Kohlarten", "Zwiebeln", "Knollensellerie", "Pastinaken"]}};
+const importsAll = [{"kind": "Gemüse", "product": "Tomaten (Rispentomaten/Cherry/Fleischtomaten)", "base": "Tomaten", "countries": ["Spanien", "Niederlande", "Italien", "Marokko"]}, {"kind": "Gemüse", "product": "Paprika", "base": "Paprika", "countries": ["Spanien", "Niederlande", "Marokko", "Türkei"]}, {"kind": "Gemüse", "product": "Gurken", "base": "Gurke", "countries": ["Spanien", "Niederlande", "Polen", "Griechenland"]}, {"kind": "Gemüse", "product": "Zucchini", "base": "Zucchini", "countries": ["Spanien", "Italien", "Marokko"]}, {"kind": "Gemüse", "product": "Aubergine", "base": "Aubergine", "countries": ["Spanien", "Italien", "Niederlande", "Türkei"]}, {"kind": "Gemüse", "product": "Chili / Peperoni", "base": "Chili", "countries": ["Spanien", "Türkei", "Marokko", "Niederlande"]}, {"kind": "Gemüse", "product": "Eisbergsalat", "base": "Eisbergsalat", "countries": ["Spanien", "Italien"]}, {"kind": "Gemüse", "product": "Kopfsalat", "base": "Kopfsalat", "countries": ["Spanien", "Italien", "Frankreich"]}, {"kind": "Gemüse", "product": "Rucola", "base": "Rucola", "countries": ["Italien", "Spanien"]}, {"kind": "Gemüse", "product": "Babyspinat", "base": "Spinat", "countries": ["Spanien", "Italien", "Frankreich"]}, {"kind": "Gemüse", "product": "Zuckerschoten", "base": "Zuckerschoten", "countries": ["Kenia", "Peru", "Guatemala", "Spanien"]}, {"kind": "Gemüse", "product": "Buschbohnen", "base": "Bohnen", "countries": ["Marokko", "Kenia", "Spanien", "Ägypten"]}, {"kind": "Gemüse", "product": "Edamame", "base": "Edamame", "countries": ["China", "Taiwan", "Vietnam"]}, {"kind": "Gemüse", "product": "Avocado", "base": "Avocado", "countries": ["Peru", "Chile", "Spanien", "Israel", "Südafrika"]}, {"kind": "Gemüse", "product": "Süßkartoffel", "base": "Süßkartoffel", "countries": ["USA", "Spanien", "Ägypten", "Honduras"]}, {"kind": "Gemüse", "product": "Ingwer", "base": "Ingwer", "countries": ["China", "Peru", "Brasilien"]}, {"kind": "Gemüse", "product": "Kurkuma", "base": "Kurkuma", "countries": ["Indien", "Peru", "Sri Lanka"]}, {"kind": "Gemüse", "product": "Knoblauch", "base": "Knoblauch", "countries": ["China", "Spanien", "Argentinien"]}, {"kind": "Gemüse", "product": "Schalotten", "base": "Schalotte", "countries": ["Frankreich", "Niederlande", "Spanien"]}, {"kind": "Gemüse", "product": "Staudensellerie", "base": "Sellerie", "countries": ["Spanien", "Italien"]}, {"kind": "Gemüse", "product": "Champignons", "base": "Champignons", "countries": ["Niederlande", "Polen", "Deutschland (auch häufig)"]}, {"kind": "Obst", "product": "Zitrone", "base": "Zitrone", "countries": ["Spanien", "Italien", "Türkei", "Argentinien"]}, {"kind": "Obst", "product": "Grapefruit", "base": "Grapefruit", "countries": ["Südafrika", "USA", "Israel", "Spanien"]}, {"kind": "Obst", "product": "Mandarinen", "base": "Mandarine", "countries": ["Spanien", "Marokko", "Türkei", "Italien"]}, {"kind": "Obst", "product": "Clementinen", "base": "Clementine", "countries": ["Spanien", "Marokko", "Italien"]}, {"kind": "Obst", "product": "Orangen", "base": "Orange", "countries": ["Spanien", "Italien", "Griechenland", "Ägypten", "Südafrika"]}, {"kind": "Obst", "product": "Bananen", "base": "Banane", "countries": ["Ecuador", "Kolumbien", "Costa Rica", "Panama", "Dominikanische Republik"]}, {"kind": "Obst", "product": "Ananas", "base": "Ananas", "countries": ["Costa Rica", "Ghana", "Elfenbeinküste"]}, {"kind": "Obst", "product": "Mango", "base": "Mango", "countries": ["Brasilien", "Peru", "Indien", "Pakistan", "Côte d’Ivoire"]}, {"kind": "Obst", "product": "Papaya", "base": "Papaya", "countries": ["Brasilien", "Mexiko", "Ghana", "Sri Lanka"]}, {"kind": "Obst", "product": "Maracuja", "base": "Maracuja", "countries": ["Brasilien", "Kolumbien", "Peru", "Ecuador"]}, {"kind": "Obst", "product": "Kokosnuss", "base": "Kokosnuss", "countries": ["Sri Lanka", "Indonesien", "Philippinen", "Indien"]}, {"kind": "Obst", "product": "Kiwi", "base": "Kiwi", "countries": ["Italien", "Neuseeland", "Chile", "Griechenland"]}, {"kind": "Obst", "product": "Granatapfel", "base": "Granatapfel", "countries": ["Türkei", "Spanien", "Israel", "Ägypten"]}, {"kind": "Obst", "product": "Feigen", "base": "Feige", "countries": ["Türkei", "Spanien", "Italien", "Griechenland"]}, {"kind": "Obst", "product": "Datteln", "base": "Dattel", "countries": ["Tunesien", "Algerien", "Israel", "Iran", "Saudi-Arabien"]}, {"kind": "Obst", "product": "Melonen", "base": "Melone", "countries": ["Spanien", "Italien", "Türkei", "Marokko", "Brasilien"]}];
+const localNutrition = {"Äpfel": {"kcal": 52, "carbs": 14, "sugar": 10, "protein": 0.3, "fat": 0.2, "fiber": 2.4, "note": "Lokal hinterlegt."}, "Tomaten": {"kcal": 18, "carbs": 3.9, "sugar": 2.6, "protein": 0.9, "fat": 0.2, "fiber": 1.2, "note": "Lokal hinterlegt."}, "Kartoffeln": {"kcal": 77, "carbs": 17, "sugar": 0.8, "protein": 2.0, "fat": 0.1, "fiber": 2.2, "note": "Lokal hinterlegt."}};
+const nutritionCache = new Map();
+let showImportsMode = "all";
+
+function normalizeLabel(label){ return label.replace(/\(.*?\)/g, "").trim(); }
+function uniq(a){ return Array.from(new Set(a)); }
+
+function monthFruitVeg(month){
+  const d = seasonal[month] || {fruitFresh:[],fruitStore:[],vegFresh:[],vegStore:[]};
+  const fruit = uniq([...(d.fruitFresh||[]), ...(d.fruitStore||[])]).map(normalizeLabel);
+  const veg = uniq([...(d.vegFresh||[]), ...(d.vegStore||[])]).map(normalizeLabel);
+  return {fruit, veg};
+}
+
+// --- keep emoji + tile creation from square file ---
+// We re-define emojiFor + makeTile with support for import subtext.
+function emojiFor(name){
+  const s = name.toLowerCase();
+  if (s.includes("apfel")) return "🍎";
+  if (s.includes("birn")) return "🍐";
+  if (s.includes("banan")) return "🍌";
+  if (s.includes("kirs")) return "🍒";
+  if (s.includes("traub")) return "🍇";
+  if (s.includes("zitron")) return "🍋";
+  if (s.includes("orang") || s.includes("mandarin") || s.includes("clement")) return "🍊";
+  if (s.includes("ananas")) return "🍍";
+  if (s.includes("mango")) return "🥭";
+  if (s.includes("avocado")) return "🥑";
+  if (s.includes("kiwi")) return "🥝";
+  if (s.includes("granatapfel")) return "❤️";
+  if (s.includes("feig")) return "🌿";
+  if (s.includes("dattel")) return "🌴";
+  if (s.includes("kokos")) return "🥥";
+  if (s.includes("papaya")) return "🧡";
+  if (s.includes("maracuja")) return "✨";
+  if (s.includes("tomat")) return "🍅";
+  if (s.includes("gurk") || s.includes("zucchini")) return "🥒";
+  if (s.includes("paprika")) return "🫑";
+  if (s.includes("kartoff")) return "🥔";
+  if (s.includes("möhre") || s.includes("karott")) return "🥕";
+  if (s.includes("kürbis")) return "🎃";
+  if (s.includes("brokk") || s.includes("blumenk")) return "🥦";
+  if (s.includes("kohl") || s.includes("spinat") || s.includes("mangold") || s.includes("salat")) return "🥬";
+  if (s.includes("lauch") || s.includes("zwiebel") || s.includes("knoblauch") || s.includes("schalott")) return "🧅";
+  if (s.includes("pilz") || s.includes("champ")) return "🍄";
+  if (s.includes("ingwer") || s.includes("kurkuma")) return "🫚";
+  if (s.includes("bohn") || s.includes("edamame") || s.includes("erbse")) return "🫘";
+  if (s.includes("spargel")) return "🌿";
+  if (s.includes("radies")) return "🌶️";
+  return "✨";
+}
+
+function makeTile(name, kind, sub){
+  const tile = document.createElement("div");
+  tile.className = "tile " + (kind === "import" ? "import" : "good");
+  tile.innerHTML = `
+    <div class="tileTop">
+      <span class="badge">${kind === "import" ? "Import" : "DE"}</span>
+      <span class="tileEmoji">${emojiFor(name)}</span>
+    </div>
+    <div>
+      <div class="tileName">${name}</div>
+      ${sub ? `<div class="tileSub">${sub}</div>` : ""}
+    </div>`;
+  tile.addEventListener("click", ()=>openModal(name, kind));
+  return tile;
+}
+
+function renderMonth(month){
+  document.getElementById("monthTitle").textContent = "📅 " + month;
+  const {fruit, veg} = monthFruitVeg(month);
+
+  const fruitGrid = document.getElementById("fruitGrid");
+  const vegGrid = document.getElementById("vegGrid");
+  fruitGrid.innerHTML=""; vegGrid.innerHTML="";
+
+  fruit.forEach(x=>fruitGrid.appendChild(makeTile(x,"de")));
+  veg.forEach(x=>vegGrid.appendChild(makeTile(x,"de")));
+
+  document.getElementById("fruitEmpty").style.display = fruit.length ? "none" : "block";
+  document.getElementById("vegEmpty").style.display = veg.length ? "none" : "block";
+
+  renderImports(month);
+}
+
+function renderImports(month){
+  const q = (document.getElementById("search")?.value || "").trim().toLowerCase();
+  const impGrid = document.getElementById("impGrid");
+  impGrid.innerHTML="";
+
+  const {fruit, veg} = monthFruitVeg(month);
+  const monthSet = new Set([...fruit, ...veg].map(x=>x.toLowerCase()));
+
+  let items = importsAll.slice();
+  if (showImportsMode === "month"){
+    items = items.filter(it => monthSet.has((it.base||it.product).toLowerCase()));
+  }
+  if (q){
+    items = items.filter(it => (it.product + " " + it.kind + " " + it.countries.join(" ")).toLowerCase().includes(q));
+  }
+
+  items.forEach(it=>impGrid.appendChild(makeTile(it.product,"import", it.countries.join(", "))));
+  document.getElementById("impEmpty").style.display = items.length ? "none" : "block";
+}
+
+function renderNutri(n){
+  const fmt=v=> (v===null||v===undefined||Number.isNaN(v)) ? "—" : (Math.round(v*10)/10);
+  return `
+    <div class="nutriGrid">
+      <div class="nutriItem">🔥 <b>${fmt(n.kcal)}</b> kcal</div>
+      <div class="nutriItem">🍞 KH <b>${fmt(n.carbs)}</b> g</div>
+      <div class="nutriItem">🍬 Zucker <b>${fmt(n.sugar)}</b> g</div>
+      <div class="nutriItem">🥩 Eiweiß <b>${fmt(n.protein)}</b> g</div>
+      <div class="nutriItem">🧈 Fett <b>${fmt(n.fat)}</b> g</div>
+      <div class="nutriItem">🌾 Ballaststoffe <b>${fmt(n.fiber)}</b> g</div>
+    </div>`;
+}
+
+async function fetchFromOFF(name){
+  const url = "https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1&page_size=5&search_terms=" + encodeURIComponent(name);
+  const res = await fetch(url, {headers:{"Accept":"application/json"}});
+  if(!res.ok) return null;
+  const js = await res.json();
+  const products = js?.products || [];
+  for (const p of products){
+    const nu = p.nutriments || {};
+    const kcalFromEnergy = (nu["energy_100g"] ? (parseFloat(nu["energy_100g"]) / 4.184) : NaN);
+    const kcal = parseFloat(nu["energy-kcal_100g"] ?? nu["energy-kcal"] ?? kcalFromEnergy);
+    const carbs = parseFloat(nu["carbohydrates_100g"]);
+    const sugar = parseFloat(nu["sugars_100g"]);
+    const protein = parseFloat(nu["proteins_100g"]);
+    const fat = parseFloat(nu["fat_100g"]);
+    const fiber = parseFloat(nu["fiber_100g"]);
+    const hasSome = [kcal, carbs, protein, fat].some(v=>!Number.isNaN(v));
+    if(!hasSome) continue;
+    return {
+      kcal: Number.isNaN(kcal)?null:kcal,
+      carbs: Number.isNaN(carbs)?null:carbs,
+      sugar: Number.isNaN(sugar)?null:sugar,
+      protein: Number.isNaN(protein)?null:protein,
+      fat: Number.isNaN(fat)?null:fat,
+      fiber: Number.isNaN(fiber)?null:fiber,
+      note: p.product_name ? ("Quelle: " + p.product_name) : ""
+    };
+  }
+  return null;
+}
+
+function openModal(label, kind){
+  const name = normalizeLabel(label);
+  document.getElementById("nutriTitle").textContent = label;
+  const box = document.getElementById("nutriContent");
+
+  const headerExtra = (kind === "import") ? "<div class='nutriNote'>🚨 Import-Produkt: Herkunft siehe Kachel.</div>" : "";
+  const local = localNutrition[name] || localNutrition[label];
+
+  if(local){
+    box.innerHTML = headerExtra + renderNutri(local) + (local.note ? `<div class='nutriNote'>${local.note}</div>` : "") + "<div class='nutriNote'>Quelle: lokal.</div>";
+  } else {
+    box.innerHTML = headerExtra + "<div class='empty'>Suche Nährwerte…</div>";
+  }
+
+  document.getElementById("nutritionModal").style.display="block";
+
+  const key = name.toLowerCase();
+  if(nutritionCache.has(key)){
+    const cached = nutritionCache.get(key);
+    box.innerHTML = headerExtra + renderNutri(cached) + (cached.note ? `<div class='nutriNote'>${cached.note}</div>` : "") + "<div class='nutriNote'>Quelle: Live (Cache).</div>";
+    return;
+  }
+
+  fetchFromOFF(name).then(off=>{
+    if(!off) return;
+    nutritionCache.set(key, off);
+    box.innerHTML = headerExtra + renderNutri(off) + (off.note ? `<div class='nutriNote'>${off.note}</div>` : "") + "<div class='nutriNote'>Quelle: OpenFoodFacts.</div>";
+  }).catch(()=>{});
+}
+
+function closeModal(){ document.getElementById("nutritionModal").style.display="none"; }
+document.getElementById("nutritionBackdrop").onclick=closeModal;
+document.getElementById("nutriClose").onclick=closeModal;
+document.addEventListener("keydown",(e)=>{ if(e.key==="Escape") closeModal(); });
+
+// --- UI wiring ---
+const monthSel = document.getElementById("monthSelect");
+months.forEach(m=>{ const o=document.createElement("option"); o.value=m; o.textContent=m; monthSel.appendChild(o); });
+
+const now=new Date();
+const currentMonth = months[now.getMonth()];
+monthSel.value=currentMonth;
+
+monthSel.addEventListener("change", e=>renderMonth(e.target.value));
+document.getElementById("todayBtn").addEventListener("click", ()=>{ monthSel.value=currentMonth; renderMonth(currentMonth); });
+
+// Add/import controls if present
+const toggleBtn = document.getElementById("toggleImportsBtn");
+if(toggleBtn){
+  toggleBtn.addEventListener("click", ()=>{
+    showImportsMode = (showImportsMode==="all") ? "month" : "all";
+    toggleBtn.textContent = "Import: " + (showImportsMode==="all" ? "Alle" : "Monat");
+    renderImports(monthSel.value);
+  });
+}
+const search = document.getElementById("search");
+if(search) search.addEventListener("input", ()=>renderImports(monthSel.value));
+
+const clearCache = document.getElementById("clearCache");
+if(clearCache) clearCache.addEventListener("click", ()=>{ nutritionCache.clear(); alert("Cache geleert."); });
+
+renderMonth(currentMonth);
+</script>
+
+</body>
+</html>
